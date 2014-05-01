@@ -1,0 +1,220 @@
+<html>
+<head>
+<script src="../scripts/jQuery.js"></script>
+<script>
+
+//Boilerplate variables
+var speed=1.61803399;
+var friction = 0.98;
+var x=150;
+var y=350;
+var velX=0;
+var velY=0;
+var keys=[];
+
+//0-None, 1- Green, 2-Red;
+var STATE=0;
+var num=0;
+var redOrbMotion=[];
+redOrbMotion[1]=1;
+redOrbMotion[2]=0;
+
+function absValue(x){
+	xval=parseInt(x)
+	if(xval<0)
+	{
+		return (-1)*xval;
+	}
+	return xval;
+};
+
+function shiftToRed(object){
+	STATE=2;
+	object.src="../assets/red.jpg"
+};
+
+function shiftToGreen(object){
+	STATE=1;
+	object.src="../assets/green.jpg"
+};
+
+function collision(a,b){
+	var collide=true;
+	if(parseInt(a.style.left)>parseInt(b.style.left)+b.width)
+		collide=false;
+	if(parseInt(b.style.left)>parseInt(a.style.left)+a.width)
+		collide=false;
+	if(parseInt(a.style.top)>parseInt(b.style.top)+b.height)
+		collide=false;
+	if(parseInt(b.style.top)>parseInt(a.style.top)+a.height)
+		collide=false;
+	return collide;
+};
+
+function keyPressed(event){
+	if(event.keyCode==37)
+		keys[37]=true;
+	if(event.keyCode==38)
+		keys[38]=true;
+	if(event.keyCode==39)
+		keys[39]=true;
+	if(event.keyCode==40)
+		keys[40]=true;
+};
+
+function keyLifted(event){
+	if(event.keyCode==37)
+		keys[37]=false;
+	if(event.keyCode==38)
+		keys[38]=false;
+	if(event.keyCode==39)
+		keys[39]=false;
+	if(event.keyCode==40)
+		keys[40]=false;
+};
+
+function endLevelSuccess()
+{
+	alert("Level Completed successfully. Play the next level.");
+	window.location.assign("./Level2.html");
+};
+
+function endLevelFailure()
+{
+	alert("Failed to succesfully complete level. Please try again.");
+	window.location.assign("./Level1.html");
+};
+
+//Modified GameLoop() for each level
+function gameLoop(){
+
+	//Declare object references
+	var playerObject = document.getElementById('playerObject');
+	var whiteWall=[];
+	var redOrb=[];
+	for(var i = 1; i <=6 ; i++)
+	{
+		whiteWall[i] = document.getElementById('whiteWall'+i);
+	}
+	for(i=1;i<=2;i++)
+	{
+		redOrb[i] = document.getElementById('redOrb'+i);
+	}
+	
+	//Control Direction and Velocity
+	if (keys[38]) {
+        if (velY > -speed) {
+            velY--;
+        }
+    }
+    
+    if (keys[40]) {
+        if (velY < speed) {
+            velY++;
+        }
+    }
+    if (keys[39]) {
+        if (velX < speed) {
+            velX++;
+        }
+    }
+    if (keys[37]) {
+        if (velX > -speed) {
+            velX--;
+        }
+    }
+	
+	//Apply Friction
+	velY *= friction;
+    y += velY;
+    velX *= friction;
+    x += velX;
+	
+	//Modify position of player-controlled object
+	playerObject.style.left=parseInt(x)+'px';
+	playerObject.style.top=parseInt(y)+'px';
+	
+	//Modify position of automatic objects
+	if(redOrbMotion[1]==0)
+	{
+		redOrb[1].style.top=parseInt(redOrb[1].style.top)+1+'px';
+		if(collision(redOrb[1], whiteWall[2]))
+		{
+			redOrbMotion[1]=1;
+		}
+	}
+	if(redOrbMotion[1]==1)
+	{	
+		redOrb[1].style.top=parseInt(redOrb[1].style.top)-1+'px';
+		if(collision(redOrb[1], whiteWall[1]))
+		{
+			redOrbMotion[1]=0;
+		}
+	}
+	if(redOrbMotion[2]==0)
+	{
+		redOrb[2].style.left=parseInt(redOrb[2].style.left)+1+'px';
+		if(collision(redOrb[2], whiteWall[4]))
+		{
+			redOrbMotion[2]=1;
+		}
+	}
+	if(redOrbMotion[2]==1)
+	{	
+		redOrb[2].style.left=parseInt(redOrb[2].style.left)-1+'px';
+		if(collision(redOrb[2], whiteWall[5]))
+		{
+			redOrbMotion[2]=0;
+		}
+	}
+	
+	//Implement collision and wall passes/hits and color shifts
+	for(i=1;i<=2;i++)
+	{
+		if(collision(playerObject, redOrb[i]))
+		{
+			if($("#redOrb"+i).is(":visible") )
+			{
+				$("#redOrb"+i).hide();
+				num++;
+			}
+		}
+	}
+	
+	for(i=1;i<=6;i++)
+	{
+		if(collision(playerObject,whiteWall[i]))
+		{
+			//$("#whiteWall"+i).hide()
+			$("#playerObject").hide()
+			endLevelFailure();
+		}
+	}
+
+	//Clean-up and game over conditions
+	if(num==2)
+		endLevelSuccess();
+	
+	
+	//Call recursively every 10 ms
+	setTimeout("gameLoop()",10);
+};
+
+</script>
+</head>
+<body style="background-color:black;" onload="gameLoop()" onkeydown="keyPressed(event)" onkeyup="keyLifted(event)">
+<div align=center id="gameArea" style="width:640px;height:480px;border-width:.2em;border-style: dotted;border-color:grey;">	
+	<!-- Orbs -->
+	<img id="playerObject" style="position:absolute;left:150;right:15;top:350;bottom:auto;" src="../assets/red.jpg" class="playerObject" height="20" width="20">
+	<img id="redOrb1" style="position:absolute;left:350;right:15;top:350;bottom:auto;" src="../assets/redOrb.jpg" class="redOrb" height="20" width="20">
+	<img id="redOrb2" style="position:absolute;left:450;right:15;top:150;bottom:auto;" src="../assets/redOrb.jpg" class="redOrb" height="20" width="20">
+	<!-- Walls -->
+	<img id="whiteWall1" style="position:absolute;left:50;right:15;top:300;bottom:auto;" src="../assets/whiteLine.png" class="whiteWall" height="5" width="325">
+	<img id="whiteWall2" style="position:absolute;left:50;right:15;top:420;bottom:auto;" src="../assets/whiteLine.png" class="whiteWall" height="5" width="500">
+	<img id="whiteWall3" style="position:absolute;left:50;right:15;top:300;bottom:auto;" src="../assets/whiteLine.png" class="whiteWall" height="120" width="5">
+	<img id="whiteWall4" style="position:absolute;left:550;right:15;top:75;bottom:auto;" src="../assets/whiteLine.png" class="whiteWall" height="350" width="5">
+	<img id="whiteWall5" style="position:absolute;left:375;right:15;top:75;bottom:auto;" src="../assets/whiteLine.png" class="whiteWall" height="230" width="5">
+	<img id="whiteWall6" style="position:absolute;left:375;right:15;top:75;bottom:auto;" src="../assets/whiteLine.png" class="whiteWall" height="5" width="180">
+</div>
+</body>
+</html>
